@@ -1,27 +1,29 @@
 import axios from 'axios';
 
-const pinataApiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
-const pinataSecretApiKey = process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY;
+export async function getDocumentsNearLocation(targetLocation) {
+    if (!targetLocation || !targetLocation.latitude || !targetLocation.longitude) {
+        throw new Error('Invalid targetLocation. It must include latitude and longitude.');
+    }
 
-async function getDocumentsNearLocation(targetLocation) {
     const url = `https://api.pinata.cloud/data/pinList?status=pinned`;
 
     const response = await axios.get(url, {
         headers: {
-            'pinata_api_key': pinataApiKey,
-            'pinata_secret_api_key': pinataSecretApiKey
+            'pinata_api_key': '22d7e9243fc653a7e48c',
+            'pinata_secret_api_key': 'f18cbf50244aad7ba931bf0a0421c8ec53ca0fd8465ad8d29d2647c10d8570c9'
         }
     });
 
     const documents = response.data.rows;
-    const resolvedLocation = await targetLocation;
+
     const nearbyDocuments = documents.filter(doc => {
-        const latitude = doc.metadata?.keyvalues?.latitude;
-        const longitude = doc.metadata?.keyvalues?.longitude;
-        if (location) {
+        const latitude = parseFloat(doc.metadata?.keyvalues?.latitude);
+        const longitude = parseFloat(doc.metadata?.keyvalues?.longitude);
+
+        if (!isNaN(latitude) && !isNaN(longitude)) {
             const distance = getDistanceFromLatLonInKm(
-                resolvedLocation.latitude,
-                resolvedLocation.longitude,
+                targetLocation.latitude,
+                targetLocation.longitude,
                 latitude,
                 longitude
             );
@@ -50,5 +52,3 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
 function deg2rad(deg) {
     return deg * (Math.PI / 180);
 }
-
-export { getDocumentsNearLocation };
