@@ -1,6 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { getDocumentsNearLocation } from '../scripts/ipfs.js';
+import { generateArticle } from '../scripts/ai.js';
+
 const router = express.Router();
-const { getDocumentsNearLocation } = require('../scripts/data');
 
 // Define the Default GET endpoint
 router.get('/', (req, res) => {
@@ -20,8 +22,8 @@ router.post('/', (req, res) => {
 // Define the POST endpoint
 router.post('/lat/:latitude/long/:longitude', async (req, res) => {
   try {
-    const latitude = parseFloat(req.params.latitude); // Ensure numerical type
-    const longitude = parseFloat(req.params.longitude); // Ensure numerical type
+    const latitude = parseFloat(req.params.latitude);
+    const longitude = parseFloat(req.params.longitude);
 
     const target = {
       latitude,
@@ -29,12 +31,15 @@ router.post('/lat/:latitude/long/:longitude', async (req, res) => {
     };
 
     const documents = await getDocumentsNearLocation(target);
-
-    res.status(200).json(documents);
+    const article = await generateArticle(documents);
+    res.send(article);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'An error occurred while processing the request.' });
+    console.error('Error processing documents:', error);
+    res.status(500).json({ 
+      error: 'An error occurred while processing the request.',
+      details: error.message 
+    });
   }
 });
 
-module.exports = router;
+export default router;

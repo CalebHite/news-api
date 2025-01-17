@@ -1,5 +1,5 @@
-const express = require('express');
-const indexRouter = require('./routes/index');
+import express from 'express';
+import indexRouter from './routes/index.js';
 
 const app = express();
 
@@ -17,4 +17,4 @@ app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-module.exports = app;
+export default app;
