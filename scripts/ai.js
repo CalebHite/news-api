@@ -78,13 +78,10 @@ async function analyzeVideo(videoData) {
 async function analyzeText(text) {
     try {
         // Ensure the prompt and context are strings
-        const prompt = String(text);
-        const context = "You are an expert analyst and writer. Analyze the content and provide key insights.";
+        const prompt = text.toString();
+        const context = "You are an expert analyst and writer. Analyze this content and provide key insights: " + prompt;
 
-        const response = await model.generateContent({
-            prompt: prompt,
-            context: context
-        });
+        const response = await model.generateContent(context);
 
         return response.text;
     } catch (error) {
@@ -92,11 +89,10 @@ async function analyzeText(text) {
         return 'Error analyzing text content';
     }
 }
-
 /**
  * Generates a comprehensive article from multiple IPFS documents
  * @param {Array} documents - Array of IPFS documents
- * @returns {Promise<Object>} Article and individual analyses
+ * @returns {Promise<string>} The generated article
  */
 export async function generateArticle(documents) {
     try {
@@ -139,15 +135,13 @@ export async function generateArticle(documents) {
             ${analyses.join('\n\n')}
         `;
 
-        const articleResponse = await model.generateContent({
-            prompt: articlePrompt,
-            context: "You are a skilled journalist who writes engaging and informative articles. Focus on being unbiased and factual."
-        });
+        const articleContext = `You are a skilled journalist who writes engaging and informative articles. Focus on being unbiased and factual.
+        You are writing an article about the following topic: ${articlePrompt}`;
 
-        return {
-            article: articleResponse.text,
-            analyzedDocuments: analyzedDocs
-        };
+        const articleResponse = await model.generateContent(articleContext);
+
+        // Return only the article text
+        return articleResponse.text;
     } catch (error) {
         console.error('Error generating article:', error);
         throw error;
