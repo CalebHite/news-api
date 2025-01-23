@@ -37,9 +37,10 @@ export async function getDocumentsNearLocation(targetLocation) {
     const documentsWithContent = await Promise.all(
         nearbyDocuments.map(async (doc) => {
             try {
-                // Using IPFS Gateway to fetch the content
+                console.log("Fetching content for document:", doc.ipfs_pin_hash);
                 const ipfsGatewayUrl = `https://gateway.pinata.cloud/ipfs/${doc.ipfs_pin_hash}`;
                 const contentResponse = await axios.get(ipfsGatewayUrl);
+                console.log("Content fetched successfully:", doc.ipfs_pin_hash);
                 
                 return {
                     ...doc,

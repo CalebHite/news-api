@@ -77,53 +77,99 @@ async function analyzeVideo(videoData) {
 
 async function analyzeText(text) {
     try {
-        // Ensure the prompt and context are strings
-        const prompt = text.toString();
-        const context = "You are an expert analyst and writer. Analyze this content and provide key insights: " + prompt;
+        // Clean and prepare the text content
+        let cleanText = '';
+        
+        if (typeof text === 'string') {
+            cleanText = text;
+        } else if (text instanceof Buffer) {
+            cleanText = text.toString('utf-8');
+        } else {
+            cleanText = JSON.stringify(text, null, 2);
+        }
 
-        const response = await model.generateContent(context);
+        // Create a more specific prompt for better analysis
+        const prompt = {
+            contents: [{
+                parts: [{
+                    text: `As an expert analyst, please analyze the following content and provide key insights. Focus on the main points and important details: ${cleanText}`
+                }]
+            }]
+        };
 
-        return response.text;
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        
+        // Log the analysis result for debugging
+        console.log("Analysis result:", response.text());
+        
+        return response.text();
     } catch (error) {
-        console.error('Error analyzing text:', error);
-        return 'Error analyzing text content';
+        console.error('Error in analyzeText:', error);
+        // Return a more specific error message
+        return `Error analyzing text content: ${error.message}`;
     }
 }
+
 /**
  * Generates a comprehensive article from multiple IPFS documents
  * @param {Array} documents - Array of IPFS documents
- * @returns {Promise<string>} The generated article
+    * @returns {Promise<string>} The generated article
  */
 export async function generateArticle(documents) {
     try {
+        if (!Array.isArray(documents) || documents.length === 0) {
+            throw new Error("No documents provided");
+        }
+
+        console.log("Received documents:", documents); // Debug log
+
         // First, analyze each document individually
-        const analyzedDocs = await Promise.all(documents.map(async (doc) => {
-            if (!doc.content || doc.error) {
-                return {
-                    ...doc,
-                    analysis: 'No content available for analysis'
-                };
-            }
+        const analyzedDocs = await Promise.all(
+            documents.map(async (doc) => {
+                console.log("Processing document:", doc); // Debug log
+                
+                if (!doc.content || doc.error) {
+                    console.log("Skipping document - no content or has error:", doc.ipfs_pin_hash);
+                    return {
+                        ...doc,
+                        analysis: 'No content available for analysis'
+                    };
+                }
 
-            try {
-                const analysis = await analyzeContent(doc.content, doc.mime_type, doc.metadata);
-                return {
-                    ...doc,
-                    analysis
-                };
-            } catch (error) {
-                return {
-                    ...doc,
-                    analysis: 'Error analyzing content',
-                    analysisError: error.message
-                };
-            }
-        }));
+                try {
+                    const analysis = await analyzeContent(doc.content, doc.mime_type, doc.metadata);
+                    console.log("Analysis completed for document:", doc.ipfs_pin_hash); // Debug log
+                    return {
+                        ...doc,
+                        analysis
+                    };
+                } catch (error) {
+                    console.error("Analysis failed for document:", doc.ipfs_pin_hash, error);
+                    return {
+                        ...doc,
+                        analysis: 'Error analyzing content',
+                        analysisError: error.message
+                    };
+                }
+            })
+        );
 
-        // Then, generate a comprehensive article from all analyses
         const analyses = analyzedDocs
             .map(doc => doc.analysis)
-            .filter(analysis => analysis && !analysis.startsWith('Error'));
+            .filter(analysis => {
+                console.log("Checking analysis:", analysis); // Debug log
+                return analysis && 
+                       typeof analysis === 'string' && 
+                       analysis.length > 0 && 
+                       !analysis.startsWith('Error analyzing');
+            });
+
+        console.log("Valid analyses:", analyses.length); // Debug log
+
+        if (analyses.length === 0) {
+            throw new Error("No valid analyses to generate an article from. Check if documents contain valid content.");
+        }
 
         const articlePrompt = `
             Based on the following analyses of different media and documents, 
@@ -141,7 +187,7 @@ export async function generateArticle(documents) {
         const articleResponse = await model.generateContent(articleContext);
 
         // Return only the article text
-        return articleResponse.text;
+        return articleResponse.text; // Add .text to get the actual content
     } catch (error) {
         console.error('Error generating article:', error);
         throw error;
