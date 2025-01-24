@@ -10,8 +10,27 @@ router.get('/', (req, res) => {
 });
 
 // Define the GET endpoint
-router.get('/:path*', (req, res) => {
-  res.send('GET: ' + req.params.path);
+router.get('/lat/:latitude/long/:longitude', async (req, res) => {
+  try {
+    const latitude = parseFloat(req.params.latitude);
+    const longitude = parseFloat(req.params.longitude);
+
+    const target = {
+      latitude,
+      longitude
+    };
+
+    const documents = await getDocumentsNearLocation(target);
+    const imageDocuments = documents.filter(doc => doc.mime_type && doc.mime_type.startsWith('image/'));
+
+    res.json(imageDocuments);
+  } catch (error) {
+    console.error('Error retrieving image documents:', error);
+    res.status(500).json({ 
+      error: 'An error occurred while processing the request.',
+      details: error.message 
+    });
+  }
 });
 
 // Define the Default POST endpoint

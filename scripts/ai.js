@@ -118,6 +118,9 @@ async function analyzeText(text) {
  */
 export async function generateArticle(documents) {
     try {
+        // Add a debug log to check the documents array
+        console.log("Documents passed to generateArticle:", documents);
+
         if (!Array.isArray(documents) || documents.length === 0) {
             throw new Error("No documents provided");
         }
