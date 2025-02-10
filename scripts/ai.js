@@ -14,6 +14,9 @@ async function analyzeContent(content, mimeType, metadata) {
     try {
         let analysis = '';
 
+        // Log the content type and size for debugging
+        console.log(`Analyzing content of type: ${mimeType}, size: ${content.length || 'unknown'}`);
+
         // Handle different types of content
         if (mimeType.startsWith('image/')) {
             analysis = await analyzeImage(content);
@@ -32,16 +35,20 @@ async function analyzeContent(content, mimeType, metadata) {
         return analysis;
     } catch (error) {
         console.error('Error analyzing content:', error);
-        throw error;
+        return `Error analyzing content: ${error.message}`;
     }
 }
 
 async function analyzeImage(imageData) {
     try {
         const response = await model.generateContent({
-            prompt: "Please analyze this image and describe its key elements and significance.",
-            image: `data:image/jpeg;base64,${imageData.toString('base64')}`
-        });
+            contents: [{
+                parts: [
+                    { text: "Please analyze this image and describe its key elements and significance." },
+                    { inlineData: { mimeType: "image/jpeg", data: imageData.toString("base64") } }
+                ]
+            }]
+        });        
 
         return response.text;
     } catch (error) {
