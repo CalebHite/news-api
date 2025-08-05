@@ -9,8 +9,8 @@ export async function getDocumentsNearLocation(targetLocation) {
 
     const response = await axios.get(url, {
         headers: {
-            'pinata_api_key': '22d7e9243fc653a7e48c',
-            'pinata_secret_api_key': 'f18cbf50244aad7ba931bf0a0421c8ec53ca0fd8465ad8d29d2647c10d8570c9'
+            'pinata_api_key': 'hidden',
+            'pinata_secret_api_key': 'hidden'
         }
     });
 
