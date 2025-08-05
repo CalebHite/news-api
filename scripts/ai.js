@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Readable } from 'stream';
 
-const genAI = new GoogleGenerativeAI("AIzaSyAJ19BKd_HmLWhWev3SzqZCoKRFq239eXg");
+const genAI = new GoogleGenerativeAI("hidden");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 /**
